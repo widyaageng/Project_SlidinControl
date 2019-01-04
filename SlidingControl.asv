@@ -1,0 +1,61 @@
+%%--------------------------
+%----- SLIDING CONTROL------
+%%--------------------------
+clear;clc;
+%% State space of system
+a = 2;
+b = 1;
+c1 = 1;
+c2 = 1;
+Mu = 0.5;
+t = (0:0.01:10)';
+dmax = 0.9;
+d = dmax*sin(628*t);
+
+% initial state values
+init_cond = [1 1]';
+
+A = [a 0;1 0];
+B = [b;0];
+D = [1;0];
+Cy = [1 0;0 1];
+
+%% Sliding surface polynomial coefficients
+surf_C = [c1;c2];
+
+% surface stability check
+if (-1)*surf_C(2)/surf_C(1) < 0
+    disp('Stable');
+else
+    disp('Roots of surface polynomial is on closed right plane, unstable/marginally stable');
+end
+
+%% Plot of Phase Portrait
+x1_init = 1;
+x2_init = 1;
+
+x = [x1_init;x2_init];
+xdot = x;
+surf_val = surf_C'*x;
+x_traj = x';
+t =0;
+while abs(surf_val)>1e-3
+    t = t + 0.001;
+    u_con = (-1)*(a*surf_C(1) + surf_C(2))*x(1) - Mu*sign(surf_val);
+    u_con = u_con/(surf_C(1)*b);
+    xdot = A*x + B*u_con + D*dmax*sin(628*t);
+    x = x + xdot*double(toc(sim_time)-tprev);
+    tprev = toc(sim_time);
+    x_traj = [x_traj;x'];
+    surf_val = surf_C'*x
+end
+
+surfline = [(-1)*(-10:0.1:10)' (-10:0.1:10)'];
+
+figure;
+hold on;
+plot(x_traj(:,1),x_traj(:,2),'-.r');
+plot(surfline(:,1),surfline(:,2),'-.b');
+legend('state','surf');
+axis([min([min(x_traj) min(surfline)])-0.5 max([max(x_traj) max(surfline)])+0.5 min([min(x_traj) min(surfline)])-0.5 max([max(x_traj) max(surfline)])+0.5]);
+grid; hold off;
